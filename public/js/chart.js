@@ -1,5 +1,4 @@
 // src/chart.ts
-var parseTime = d3.timeParse("%Y-%m-%dT%H:%M:%SZ");
 function logDateInfo(label, date) {
   if (date instanceof Date) {
     console.log(`${label}: ${date.toISOString()} (${date.getTime()})`);
@@ -30,32 +29,38 @@ function formatPercent(value) {
 }
 function createChart(data) {
   console.log("Creating chart with data:", data);
+  console.log("Data points count:", data.values.length);
+  if (data.values.length > 0) {
+    const firstDate = new Date(data.values[0].date);
+    const lastDate = new Date(data.values[data.values.length - 1].date);
+    console.log("Date range:", firstDate.toISOString(), "to", lastDate.toISOString());
+  }
   try {
     let makeXGrid2 = function() {
-      return d3.axisBottom(x).ticks(d3.timeDay.every(2)).tickSize(-height).tickFormat(() => "");
+      return d3.axisBottom(x).ticks(d3.timeDay.every(2)).tickSize(-height).tickFormat("");
     }, makeYGrid2 = function() {
-      return d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat(() => "");
+      return d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat("");
     };
     var makeXGrid = makeXGrid2, makeYGrid = makeYGrid2;
     data.values.forEach((d) => {
       if (!(d.date instanceof Date)) {
-        console.error("Date is not a Date object:", d.date);
+        console.log("Converting date:", d.date);
         d.date = new Date(d.date);
       }
     });
+    d3.select("#chart").selectAll("*").remove();
     const minDate = d3.min(data.values, (d) => d.date);
     const maxDate = d3.max(data.values, (d) => d.date);
-    if (minDate) logDateInfo("Min date", minDate);
-    if (maxDate) logDateInfo("Max date", maxDate);
+    console.log("X-axis date range:", minDate, "to", maxDate);
     const margin = { top: 50, right: 120, bottom: 80, left: 100 };
     const width = Math.max(800, window.innerWidth - margin.left - margin.right - 40);
     const height = 500;
-    d3.select("#chart").selectAll("*").remove();
     const svg = d3.select("#chart").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom).append("g").attr("transform", `translate(${margin.left},${margin.top})`);
     const x = d3.scaleTime().domain([
-      d3.min(data.values, (d) => d.date) || /* @__PURE__ */ new Date(),
-      d3.max(data.values, (d) => d.date) || /* @__PURE__ */ new Date()
+      minDate || /* @__PURE__ */ new Date(),
+      maxDate || /* @__PURE__ */ new Date()
     ]).range([0, width]);
+    console.log("X scale domain:", x.domain());
     const yMin = d3.min(data.values, (d) => d.totalValueTwd) || 0;
     const yMax = d3.max(data.values, (d) => d.totalValueTwd) || 0;
     const yRange = yMax - yMin;
@@ -107,7 +112,21 @@ function createChart(data) {
     const segment = data.values;
     svg.append("path").datum(segment).attr("class", "area").attr("d", area).style("fill", "rgba(33, 150, 243, 0.1)");
     svg.append("path").datum(segment).attr("class", "line").attr("d", line).style("stroke", "#2196F3").style("stroke-width", 2).style("fill", "none");
-    const xAxis = d3.axisBottom(x).ticks(d3.timeDay.every(2)).tickFormat(d3.timeFormat("%m/%d"));
+    let tickInterval = d3.timeDay.every(2);
+    const dataPointCount = data.values.length;
+    if (dataPointCount <= 30) {
+      tickInterval = d3.timeDay.every(1);
+    } else if (dataPointCount <= 60) {
+      tickInterval = d3.timeDay.every(2);
+    } else if (dataPointCount <= 90) {
+      tickInterval = d3.timeDay.every(3);
+    } else if (dataPointCount <= 180) {
+      tickInterval = d3.timeDay.every(7);
+    } else {
+      tickInterval = d3.timeDay.every(14);
+    }
+    console.log("Using tick interval based on", dataPointCount, "data points");
+    const xAxis = d3.axisBottom(x).ticks(tickInterval).tickFormat(d3.timeFormat("%m/%d"));
     svg.append("g").attr("class", "x axis").attr("transform", `translate(0,${height})`).call(xAxis).selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-45)");
     const yAxis = d3.axisLeft(y).ticks(10).tickFormat((value) => (value / 1e6).toFixed(2) + "M");
     svg.append("g").attr("class", "y axis").call(yAxis);
@@ -123,20 +142,20 @@ function createChart(data) {
       const formattedChange = d.changePercent !== void 0 ? formatPercent(d.changePercent) : "N/A";
       tooltip.transition().duration(200).style("opacity", 1);
       tooltip.html(`
-                <div style="margin-bottom: 5px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
-                    ${formattedDate}
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
-                    <span>\u7E3D\u503C:</span>
-                    <span style="font-weight: bold;">${formattedValue}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span>\u8B8A\u5316:</span>
-                    <span style="font-weight: bold; color: ${d.changePercent !== void 0 && d.changePercent >= 0 ? "#4CAF50" : "#F44336"}">
-                        ${formattedChange}
-                    </span>
-                </div>
-            `);
+        <div style="margin-bottom: 5px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 5px;">
+          ${formattedDate}
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+          <span>\u7E3D\u503C:</span>
+          <span style="font-weight: bold;">${formattedValue}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>\u8B8A\u5316:</span>
+          <span style="font-weight: bold; color: ${d.changePercent >= 0 ? "#4CAF50" : "#F44336"}">
+            ${formattedChange}
+          </span>
+        </div>
+      `);
       const tooltipWidth = 180;
       const tooltipHeight = 100;
       const windowWidth = window.innerWidth;
@@ -179,45 +198,45 @@ function createChart(data) {
 function addChartStyles() {
   const style = document.createElement("style");
   style.textContent = `
-        .line {
-            fill: none;
-            stroke: #2196F3;
-            stroke-width: 2;
-        }
-        .area {
-            fill: rgba(33, 150, 243, 0.1);
-        }
-        .grid line {
-            stroke: #ddd;
-            stroke-opacity: 0.1;
-        }
-        .chart-tooltip {
-            position: absolute;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            pointer-events: none;
-            font-size: 12px;
-            z-index: 1000;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            min-width: 150px;
-        }
-        .axis-label {
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .point-label {
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .data-point {
-            transition: r 0.2s ease, fill 0.2s ease;
-        }
-        .highlight-point {
-            transition: r 0.2s ease, fill 0.2s ease;
-        }
-    `;
+    .line {
+      fill: none;
+      stroke: #2196F3;
+      stroke-width: 2;
+    }
+    .area {
+      fill: rgba(33, 150, 243, 0.1);
+    }
+    .grid line {
+      stroke: #ddd;
+      stroke-opacity: 0.1;
+    }
+    .chart-tooltip {
+      position: absolute;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      pointer-events: none;
+      font-size: 12px;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      min-width: 150px;
+    }
+    .axis-label {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .point-label {
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .data-point {
+      transition: r 0.2s ease, fill 0.2s ease;
+    }
+    .highlight-point {
+      transition: r 0.2s ease, fill 0.2s ease;
+    }
+  `;
   document.head.appendChild(style);
 }
 function setupResizeHandler() {

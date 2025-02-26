@@ -1,17 +1,3 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
-
-// src/index.ts
 // src/index.ts
 import { processData } from './utils/dataProcessor';
 
@@ -20,7 +6,7 @@ interface Env {
   PORTFOLIO_CACHE: KVNamespace;
 }
 
-// Helper function to add CORS headers
+// 幫助函數添加 CORS 頭
 function corsHeaders(request: Request): Headers {
   const headers = new Headers();
   
@@ -33,7 +19,7 @@ function corsHeaders(request: Request): Headers {
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    // Handle CORS preflight requests
+    // 處理 CORS 預檢請求
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: corsHeaders(request)
@@ -41,26 +27,42 @@ export default {
     }
     
     const url = new URL(request.url);
-    
-    // Handle API requests
+    console.log('Request URL:', url.toString());
+  
+    // 處理 API 請求
     if (url.pathname.startsWith('/api/')) {
-      // Portfolio data API endpoint
+      // 投資組合數據 API 端點
       if (url.pathname === '/api/portfolio') {
         try {
-          // Check cache first (if you're using KV)
-          const cachedData = await env.PORTFOLIO_CACHE.get('latest');
-          if (cachedData) {
-            return new Response(cachedData, {
-              headers: {
-                ...corsHeaders(request),
-                'Content-Type': 'application/json',
-                'Cache-Control': 'max-age=3600'
-              }
-            });
+          // 從 URL 獲取範圍參數，默認為 3
+          const range = url.searchParams.get('range') || '3';
+          // 添加一個查詢參數來強制刷新緩存
+          const forceRefresh = url.searchParams.get('refresh') === 'true';
+          console.log('Requested range:', range);
+          
+          // 使用範圍作為緩存鍵
+          const cacheKey = `portfolio-range-${range}`;
+          
+          // 首先檢查緩存
+          if (!forceRefresh) {
+            const cachedData = await env.PORTFOLIO_CACHE.get(cacheKey);
+            if (cachedData) {
+              console.log('Cache hit for range:', range);
+              return new Response(cachedData, {
+                headers: {
+                  ...corsHeaders(request),
+                  'Content-Type': 'application/json',
+                  'Cache-Control': 'max-age=3600'
+                }
+              });
+            }
           }
-          // Fetch data from the external API
+          // 從外部 API 獲取數據
+          const apiUrl = `https://portfoliomanager-production.up.railway.app/api/PortfolioDailyValue/67283d5d447a55a757f87db7/history?range=${range}`;
+          console.log('Fetching from API:', apiUrl);
+          
           const apiResponse = await fetch(
-            'https://portfoliomanager-production.up.railway.app/api/PortfolioDailyValue/67283d5d447a55a757f87db7/history?range=3',
+            apiUrl,
             {
               headers: {
                 'Accept': 'application/json'
@@ -76,12 +78,16 @@ export default {
           }
           
           const data = await apiResponse.json();
+          console.log('API response received, processing data...');
           const processedData = processData(data);
-          // Cache the processed data (if you're using KV)
-          await env.PORTFOLIO_CACHE.put('latest', JSON.stringify(processedData), {
-            expirationTtl: 3600 // Cache for 1 hour
+          
+          // 緩存處理後的數據
+          await env.PORTFOLIO_CACHE.put(cacheKey, JSON.stringify(processedData), {
+            expirationTtl: 3600 // 緩存 1 小時
           });
-          // Return the processed data with CORS headers
+          console.log('Data cached with key:', cacheKey);
+          
+          // 返回處理後的數據，帶有 CORS 頭
           return new Response(JSON.stringify(processedData), {
             headers: {
               ...corsHeaders(request),
@@ -103,7 +109,7 @@ export default {
       });
     }
     
-    // Serve static assets
+    // 提供靜態資產
     return env.ASSETS.fetch(request);
   },
 };

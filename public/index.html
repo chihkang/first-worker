@@ -1,41 +1,33 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio Tracker</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/chart.css">
-    <!-- Load d3 and lodash from CDN -->
-    <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portfolio Tracker</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/chart.css">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Portfolio Tracker</h1>
-        <div id="summary" class="summary-container"></div>
-        <div id="chart" class="chart-container"></div>
+  <div class="container">
+    <h1>Portfolio Tracker</h1>
+    <div class="range-selector">
+      <span>時間範圍：</span>
+      <button class="range-btn" data-range="1">1個月</button>
+      <button class="range-btn active" data-range="3">3個月</button>
+      <button class="range-btn" data-range="6">6個月</button>
+      <button class="range-btn" data-range="12">12個月</button>
     </div>
+    <div id="summary" class="summary-container"></div>
+    <div id="chart" class="chart-container"></div>
+  </div>
 
-    <!-- Load your bundled JavaScript as a module -->
-    <script type="module">
-        import { initialize } from '/js/main.js';
-        
-        // When document is fully loaded, run initialization
-        document.addEventListener('DOMContentLoaded', initialize);
-    </script>
-    <!-- 在 public/index.html 中添加 -->
-    <div class="container">
-        <h1>Portfolio Tracker</h1>
-        <div class="range-selector">
-            <span>時間範圍：</span>
-            <button class="range-btn" data-range="1">1個月</button>
-            <button class="range-btn" data-range="3">3個月</button>
-            <button class="range-btn" data-range="6">6個月</button>
-            <button class="range-btn" data-range="12">12個月</button>
-        </div>
-        <div id="summary" class="summary-container"></div>
-        <div id="chart" class="chart-container"></div>
-    </div>
+  <script type="module">
+    import { initialize } from '/js/main.js';
+    
+    // 當文檔完全加載後，運行初始化
+    document.addEventListener('DOMContentLoaded', initialize);
+  </script>
 </body>
 </html>
