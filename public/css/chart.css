@@ -1,0 +1,104 @@
+.line {
+    fill: none;
+    stroke: #2196F3;
+    stroke-width: 2;
+    stroke-dasharray: 9999;
+    stroke-dashoffset: 9999;
+    animation: drawLine 2s ease-in-out forwards;
+}
+
+.area {
+    fill: #E3F2FD;
+    opacity: 0;
+    animation: fadeIn 1s ease-in-out forwards;
+    animation-delay: 1s;
+}
+
+.axis-label {
+    font-size: 12px;
+    fill: #666;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-in-out forwards;
+    animation-delay: 1.5s;
+}
+
+.data-point {
+    opacity: 0;
+    animation: fadeIn 0.5s ease-in-out forwards;
+    animation-delay: 2s;
+}
+
+.tooltip {
+    position: absolute;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 5px;
+    pointer-events: none;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    font-size: 12px;
+    line-height: 1.4;
+    z-index: 1000;
+}
+
+@keyframes drawLine {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+.grid line {
+    stroke: #e0e0e0;
+    stroke-opacity: 0.7;
+    stroke-width: 0.5;
+}
+
+.grid path {
+    stroke-width: 0;
+}
+
+.axis path,
+.axis line {
+    stroke: #666;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-size: 12px;
+    fill: #666;
+}
+
+.highlight-point {
+    transition: r 0.2s ease-in-out, fill 0.2s ease-in-out;
+}
+
+.point-label {
+    opacity: 0;
+    animation: fadeIn 0.5s ease-in-out forwards;
+    animation-delay: 2s;
+    font-weight: bold;
+}
+
+.current-value,
+.percent-change {
+    opacity: 0;
+    animation: fadeIn 0.5s ease-in-out forwards;
+    animation-delay: 2s;
+}
+
+.legend text {
+    font-size: 12px;
+    fill: #666;
+}
+
+.value-label {
+    font-size: 12px;
+    font-weight: bold;
+}

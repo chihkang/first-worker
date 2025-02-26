@@ -11,8 +11,43 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
+// src/index.ts
+// src/index.ts
+import { processData } from './utils/dataProcessor';
+
+interface Env {
+  ASSETS: Fetcher;
+}
+
 export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    
+    // Handle API requests
+    if (url.pathname.startsWith('/api/')) {
+      // Portfolio data API endpoint
+      if (url.pathname === '/api/portfolio') {
+        try {
+          // Fetch the portfolio data from your static assets
+          const response = await env.ASSETS.fetch(new Request(`${url.origin}/data/portfolio.json`));
+          if (!response.ok) {
+            return new Response('Failed to load portfolio data', { status: 500 });
+          }
+          
+          const data = await response.json();
+          const processedData = processData(data);
+          
+          return Response.json(processedData);
+        } catch (error) {
+          console.error('Error fetching portfolio data:', error);
+          return new Response('Internal server error', { status: 500 });
+        }
+      }
+      
+      return new Response('Not found', { status: 404 });
+    }
+    
+    // Serve static assets
+    return env.ASSETS.fetch(request);
+  },
+};

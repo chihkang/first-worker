@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/chart.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Portfolio Tracker</h1>
+        <div id="summary" class="summary-container"></div>
+        <div id="chart" class="chart-container"></div>
+    </div>
+
+    <script>
+        // Fetch portfolio data from the API
+        async function loadPortfolioData() {
+            try {
+                const response = await fetch('/api/portfolio');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error loading portfolio data:', error);
+                throw error;
+            }
+        }
+
+        // Initialize the application
+        async function initialize() {
+            try {
+                console.log('Initializing chart...');
+                const processedData = await loadPortfolioData();
+                
+                // Store data in window object for resize events
+                window.chartData = processedData;
+                
+                // Import the necessary modules
+                const { createChart, addChartStyles, setupResizeHandler } = await import('/chart.js');
+                const { formatDate, formatCurrency, formatPercent } = await import('/formatters.js');
+                
+                // Add chart styles
+                addChartStyles();
+                
+                // Create chart
+                createChart(processedData);
+                
+                // Setup resize handler
+                setupResizeHandler();
+                
+                // Create summary
+                createSummary(processedData);
+            } catch (error) {
+                console.error('Error in initialization:', error);
+                document.getElementById('chart').innerHTML = 
+                    '<div class="error">圖表載入失敗，請重新整理頁面。</div>';
+            }
+        }
+
+        // Create summary section
+        function createSummary(data) {
+            const summary = document.getElementById('summary');
+            if (!summary) return;
+            
+            const startDate = formatDate(data.values[0].date);
+            const endDate = formatDate(data.values[data.values.length - 1].date);
+            const totalChange = data.summary.endValue - data.summary.startValue;
+            
+            summary.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+                    <div class="summary-item">
+                        <h3>觀察期間</h3>
+                        <p>${startDate} ~ ${endDate}</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>最高點</h3>
+                        <p style="color: #4CAF50">${formatCurrency(data.summary.highestValue)}</p>
+                        <p>${formatDate(new Date(data.summary.highestValueDate))}</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>最低點</h3>
+                        <p style="color: #F44336">${formatCurrency(data.summary.lowestValue)}</p>
+                        <p>${formatDate(new Date(data.summary.lowestValueDate))}</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>總變化</h3>
+                        <p style="color: ${totalChange >= 0 ? '#4CAF50' : '#F44336'}">
+                            ${formatCurrency(totalChange)} (${formatPercent(data.summary.changePercentage)})
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // When document is fully loaded, run initialization
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>

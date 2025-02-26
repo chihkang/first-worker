@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Tracker</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/chart.css">
+    <!-- Load d3 and lodash from CDN -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Portfolio Tracker</h1>
+        <div id="summary" class="summary-container"></div>
+        <div id="chart" class="chart-container"></div>
+    </div>
+
+    <!-- Load your bundled JavaScript as a module -->
+    <script type="module">
+        import { initialize } from '/js/main.js';
+        
+        // When document is fully loaded, run initialization
+        document.addEventListener('DOMContentLoaded', initialize);
+    </script>
+</body>
+</html>
