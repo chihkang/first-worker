@@ -325,12 +325,15 @@ export function createChart(data: ChartData): void {
             .style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)");
 
         // Add interactivity
+        // 在 src/chart.ts 中修改工具提示位置處理
+        // 找到 points.on("mouseover", function(event, d) { ... }) 部分並修改
+
         points.on("mouseover", function(event: MouseEvent, d: DataPoint) {
             d3.select(this)
                 .attr("r", 8)
                 .style("fill", "#FF4081");
 
-            // Format date and values
+            // 格式化日期和數值
             const formattedDate = d.date instanceof Date 
                 ? d.date.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })
                 : formatDate(d.date);
@@ -358,9 +361,34 @@ export function createChart(data: ChartData): void {
                         ${formattedChange}
                     </span>
                 </div>
-            `)
-                .style("left", (event.pageX + 15) + "px")
-                .style("top", (event.pageY - 15) + "px");
+            `);
+            
+            // 智能定位工具提示
+            const tooltipWidth = 180; // 估計的工具提示寬度
+            const tooltipHeight = 100; // 估計的工具提示高度
+            
+            // 獲取視窗尺寸
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // 計算工具提示位置
+            let tooltipX = event.pageX + 15;
+            let tooltipY = event.pageY - 15;
+            
+            // 檢查右邊界
+            if (tooltipX + tooltipWidth > windowWidth) {
+                tooltipX = event.pageX - tooltipWidth - 15; // 放在左側
+            }
+            
+            // 檢查下邊界
+            if (tooltipY + tooltipHeight > windowHeight) {
+                tooltipY = event.pageY - tooltipHeight - 15; // 放在上方
+            }
+            
+            // 應用計算的位置
+            tooltip
+                .style("left", tooltipX + "px")
+                .style("top", tooltipY + "px");
         })
         .on("mouseout", function() {
             d3.select(this)

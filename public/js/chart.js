@@ -136,7 +136,20 @@ function createChart(data) {
                         ${formattedChange}
                     </span>
                 </div>
-            `).style("left", event.pageX + 15 + "px").style("top", event.pageY - 15 + "px");
+            `);
+      const tooltipWidth = 180;
+      const tooltipHeight = 100;
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      let tooltipX = event.pageX + 15;
+      let tooltipY = event.pageY - 15;
+      if (tooltipX + tooltipWidth > windowWidth) {
+        tooltipX = event.pageX - tooltipWidth - 15;
+      }
+      if (tooltipY + tooltipHeight > windowHeight) {
+        tooltipY = event.pageY - tooltipHeight - 15;
+      }
+      tooltip.style("left", tooltipX + "px").style("top", tooltipY + "px");
     }).on("mouseout", function() {
       d3.select(this).attr("r", 4).style("fill", "#2196F3");
       tooltip.transition().duration(300).style("opacity", 0);

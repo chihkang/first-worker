@@ -156,7 +156,20 @@ function createChart(data) {
                         ${formattedChange}
                     </span>
                 </div>
-            `).style("left", event.pageX + 15 + "px").style("top", event.pageY - 15 + "px");
+            `);
+      const tooltipWidth = 180;
+      const tooltipHeight = 100;
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      let tooltipX = event.pageX + 15;
+      let tooltipY = event.pageY - 15;
+      if (tooltipX + tooltipWidth > windowWidth) {
+        tooltipX = event.pageX - tooltipWidth - 15;
+      }
+      if (tooltipY + tooltipHeight > windowHeight) {
+        tooltipY = event.pageY - tooltipHeight - 15;
+      }
+      tooltip.style("left", tooltipX + "px").style("top", tooltipY + "px");
     }).on("mouseout", function() {
       d3.select(this).attr("r", 4).style("fill", "#2196F3");
       tooltip.transition().duration(300).style("opacity", 0);
@@ -240,9 +253,10 @@ function setupResizeHandler() {
 
 // src/main.ts
 console.log("main.ts loaded");
-async function loadPortfolioData() {
+var currentRange = 3;
+async function loadPortfolioData(range = 3) {
   try {
-    const response = await fetch("/api/portfolio");
+    const response = await fetch(`/api/portfolio?range=${range}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -287,12 +301,37 @@ function createSummary(data) {
         </div>
     `;
 }
+function setupRangeButtons() {
+  const buttons = document.querySelectorAll(".range-btn");
+  buttons.forEach((button) => {
+    button.addEventListener("click", async (e) => {
+      const target = e.target;
+      const range = parseInt(target.getAttribute("data-range") || "3");
+      currentRange = range;
+      buttons.forEach((btn) => btn.classList.remove("active"));
+      target.classList.add("active");
+      try {
+        const data = await loadPortfolioData(range);
+        window.chartData = data;
+        createChart(data);
+        createSummary(data);
+      } catch (error) {
+        console.error("Error updating chart:", error);
+      }
+    });
+  });
+  const defaultButton = document.querySelector('.range-btn[data-range="3"]');
+  if (defaultButton) {
+    defaultButton.classList.add("active");
+  }
+}
 async function initialize() {
   try {
     console.log("Initializing chart...");
     addChartStyles();
     setupResizeHandler();
-    const processedData = await loadPortfolioData();
+    setupRangeButtons();
+    const processedData = await loadPortfolioData(currentRange);
     window.chartData = processedData;
     createChart(processedData);
     createSummary(processedData);

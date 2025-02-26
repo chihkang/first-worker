@@ -5,18 +5,22 @@ import { createChart, addChartStyles, setupResizeHandler } from './chart';
 
 console.log('main.ts loaded');
 
+// 當前選擇的時間範圍
+let currentRange = 3; // 默認為3個月
+
 /**
- * Loads portfolio data from API
+ * 從API加載投資組合數據
+ * @param range - 時間範圍（月數）
  * @returns Promise resolving to the portfolio data
  */
-async function loadPortfolioData(): Promise<PortfolioData> {
+async function loadPortfolioData(range: number = 3): Promise<PortfolioData> {
     try {
-        const response = await fetch('/api/portfolio');
+        const response = await fetch(`/api/portfolio?range=${range}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        return data; // The data is already processed by the Worker
+        return data; // 數據已由Worker處理
     } catch (error) {
         console.error('Error loading portfolio data:', error);
         throw error;
@@ -24,8 +28,8 @@ async function loadPortfolioData(): Promise<PortfolioData> {
 }
 
 /**
- * Creates a summary section with key portfolio statistics
- * @param data - The processed portfolio data
+ * 創建摘要部分，顯示關鍵投資組合統計數據
+ * @param data - 處理後的投資組合數據
  */
 function createSummary(data: PortfolioData): void {
     const summary = document.getElementById('summary');
@@ -65,25 +69,64 @@ function createSummary(data: PortfolioData): void {
 }
 
 /**
- * Initializes the application by loading data and creating chart and summary
+ * 設置範圍選擇按鈕的事件監聽器
+ */
+function setupRangeButtons(): void {
+    const buttons = document.querySelectorAll('.range-btn');
+    buttons.forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const target = e.target as HTMLElement;
+            const range = parseInt(target.getAttribute('data-range') || '3');
+            
+            // 更新當前範圍
+            currentRange = range;
+            
+            // 更新按鈕樣式
+            buttons.forEach(btn => btn.classList.remove('active'));
+            target.classList.add('active');
+            
+            // 重新加載數據並更新圖表
+            try {
+                const data = await loadPortfolioData(range);
+                (window as any).chartData = data;
+                createChart(data);
+                createSummary(data);
+            } catch (error) {
+                console.error('Error updating chart:', error);
+            }
+        });
+    });
+    
+    // 默認選中3個月按鈕
+    const defaultButton = document.querySelector('.range-btn[data-range="3"]');
+    if (defaultButton) {
+        defaultButton.classList.add('active');
+    }
+}
+
+/**
+ * 初始化應用程序，加載數據並創建圖表和摘要
  */
 export async function initialize(): Promise<void> {
     try {
         console.log('Initializing chart...');
         
-        // Add chart styles
+        // 添加圖表樣式
         addChartStyles();
         
-        // Setup resize handler
+        // 設置調整大小處理程序
         setupResizeHandler();
         
-        // Load data
-        const processedData = await loadPortfolioData();
+        // 設置範圍按鈕
+        setupRangeButtons();
         
-        // Store data in window object for resize events
+        // 加載數據
+        const processedData = await loadPortfolioData(currentRange);
+        
+        // 將數據存儲在window對象中，用於調整大小事件
         (window as any).chartData = processedData;
         
-        // Create chart and summary
+        // 創建圖表和摘要
         createChart(processedData);
         createSummary(processedData);
     } catch (error) {
@@ -96,7 +139,7 @@ export async function initialize(): Promise<void> {
     }
 }
 
-// Export functions for potential testing or reuse
+// 導出函數以供潛在的測試或重用
 export {
     loadPortfolioData,
     createSummary

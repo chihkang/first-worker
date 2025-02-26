@@ -24,5 +24,18 @@
         // When document is fully loaded, run initialization
         document.addEventListener('DOMContentLoaded', initialize);
     </script>
+    <!-- 在 public/index.html 中添加 -->
+    <div class="container">
+        <h1>Portfolio Tracker</h1>
+        <div class="range-selector">
+            <span>時間範圍：</span>
+            <button class="range-btn" data-range="1">1個月</button>
+            <button class="range-btn" data-range="3">3個月</button>
+            <button class="range-btn" data-range="6">6個月</button>
+            <button class="range-btn" data-range="12">12個月</button>
+        </div>
+        <div id="summary" class="summary-container"></div>
+        <div id="chart" class="chart-container"></div>
+    </div>
 </body>
 </html>
