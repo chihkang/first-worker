@@ -1,26 +1,23 @@
 // src/utils/dataProcessor.ts
-function processData(data) {
-  console.log("Processing data...");
+function processData(apiData) {
+  console.log("Processing data from API...");
   try {
-    const processed = {
-      ...data,
-      values: data.values?.map((item) => {
-        const dateObj = new Date(item.date);
-        return {
-          ...item,
-          date: dateObj,
-          // Add a formatted date string for debugging
-          dateStr: dateObj.toISOString(),
-          // Add a string containing only the date part, for X-axis grouping
-          dateDay: dateObj.toISOString().split("T")[0]
-        };
-      }) || []
-    };
-    processed.values.sort((a, b) => a.date.getTime() - b.date.getTime());
+    const values = apiData.values.map((item) => {
+      const dateObj = new Date(item.date);
+      return {
+        date: dateObj,
+        dateStr: dateObj.toISOString(),
+        dateDay: dateObj.toISOString().split("T")[0],
+        totalValueTwd: item.totalValueTwd,
+        changePercent: 0
+        // Will be calculated below
+      };
+    });
+    values.sort((a, b) => a.date.getTime() - b.date.getTime());
     console.log("Checking for date gaps...");
-    for (let i = 1; i < processed.values.length; i++) {
-      const currentDate = processed.values[i].date;
-      const prevDate = processed.values[i - 1].date;
+    for (let i = 1; i < values.length; i++) {
+      const currentDate = values[i].date;
+      const prevDate = values[i - 1].date;
       const daysDiff = (currentDate.getTime() - prevDate.getTime()) / (1e3 * 60 * 60 * 24);
       if (daysDiff > 1) {
         console.log(`Gap found between ${prevDate.toISOString()} and ${currentDate.toISOString()}: ${daysDiff} days`);
@@ -28,7 +25,7 @@ function processData(data) {
     }
     console.log("Checking for duplicate dates...");
     const dateMap = {};
-    processed.values.forEach((item) => {
+    values.forEach((item) => {
       const dateKey = item.dateDay;
       if (!dateMap[dateKey]) {
         dateMap[dateKey] = [];
@@ -43,16 +40,27 @@ function processData(data) {
         );
       }
     });
-    processed.values = processed.values.map((item, index) => ({
-      ...item,
-      changePercent: index === 0 ? 0 : (item.totalValueTwd - processed.values[0].totalValueTwd) / processed.values[0].totalValueTwd * 100
-    }));
-    if (processed.summary) {
-      processed.summary.highestValueDate = new Date(processed.summary.highestValueDate);
-      processed.summary.lowestValueDate = new Date(processed.summary.lowestValueDate);
+    if (values.length > 0) {
+      const firstValue = values[0].totalValueTwd;
+      values.forEach((item, index) => {
+        item.changePercent = index === 0 ? 0 : (item.totalValueTwd - firstValue) / firstValue * 100;
+      });
     }
-    console.log("Data processing complete with", processed.values.length, "data points");
-    return processed;
+    const summary = {
+      highestValueDate: new Date(apiData.summary.highestValueDate),
+      lowestValueDate: new Date(apiData.summary.lowestValueDate),
+      highestValue: apiData.summary.highestValue,
+      lowestValue: apiData.summary.lowestValue,
+      startValue: apiData.summary.startValue,
+      endValue: apiData.summary.endValue,
+      changePercentage: apiData.summary.changePercentage
+    };
+    console.log("Data processing complete with", values.length, "data points");
+    return {
+      portfolioId: apiData.portfolioId,
+      values,
+      summary
+    };
   } catch (error) {
     console.error("Error in processData:", error);
     throw error;

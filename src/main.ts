@@ -16,7 +16,7 @@ async function loadPortfolioData(): Promise<PortfolioData> {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        return data;
+        return data; // The data is already processed by the Worker
     } catch (error) {
         console.error('Error loading portfolio data:', error);
         throw error;
@@ -47,12 +47,12 @@ function createSummary(data: PortfolioData): void {
             <div class="summary-item">
                 <h3>最高點</h3>
                 <p style="color: #4CAF50">${formatCurrency(data.summary.highestValue)}</p>
-                <p>${formatDate(new Date(data.summary.highestValueDate))}</p>
+                <p>${formatDate(data.summary.highestValueDate)}</p>
             </div>
             <div class="summary-item">
                 <h3>最低點</h3>
                 <p style="color: #F44336">${formatCurrency(data.summary.lowestValue)}</p>
-                <p>${formatDate(new Date(data.summary.lowestValueDate))}</p>
+                <p>${formatDate(data.summary.lowestValueDate)}</p>
             </div>
             <div class="summary-item">
                 <h3>總變化</h3>
@@ -77,7 +77,7 @@ export async function initialize(): Promise<void> {
         // Setup resize handler
         setupResizeHandler();
         
-        // Load and process data
+        // Load data
         const processedData = await loadPortfolioData();
         
         // Store data in window object for resize events

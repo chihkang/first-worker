@@ -12,6 +12,13 @@
     "directory": "./public",
     "binding": "ASSETS"
   },
+  "kv_namespaces": [
+    {
+      "binding": "PORTFOLIO_CACHE",
+      "id": "a14dc26183de44c19790b2311b27dfa1",
+      "preview_id": "faeeea8d7b4b42d392371cbd42d6dde0"
+    }
+  ],
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1

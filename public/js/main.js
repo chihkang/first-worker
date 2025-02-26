@@ -271,12 +271,12 @@ function createSummary(data) {
             <div class="summary-item">
                 <h3>\u6700\u9AD8\u9EDE</h3>
                 <p style="color: #4CAF50">${formatCurrency(data.summary.highestValue)}</p>
-                <p>${formatDate(new Date(data.summary.highestValueDate))}</p>
+                <p>${formatDate(data.summary.highestValueDate)}</p>
             </div>
             <div class="summary-item">
                 <h3>\u6700\u4F4E\u9EDE</h3>
                 <p style="color: #F44336">${formatCurrency(data.summary.lowestValue)}</p>
-                <p>${formatDate(new Date(data.summary.lowestValueDate))}</p>
+                <p>${formatDate(data.summary.lowestValueDate)}</p>
             </div>
             <div class="summary-item">
                 <h3>\u7E3D\u8B8A\u5316</h3>

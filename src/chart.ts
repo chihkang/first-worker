@@ -14,12 +14,14 @@ interface DataPoint {
 }
 
 interface DataSummary {
-  highestValueDate: Date;
-  lowestValueDate: Date;
-  highestValue: number;
-  lowestValue: number;
-  [key: string]: any;
-}
+    highestValueDate: Date;
+    lowestValueDate: Date;
+    highestValue: number;
+    lowestValue: number;
+    startValue: number;
+    endValue: number;
+    changePercentage: number;
+  }
 
 interface ChartData {
   values: DataPoint[];
