@@ -8,11 +8,6 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2025-02-24",
 	"compatibility_flags": ["nodejs_compat"],
-  "vars": {
-    // 可以設置非敏感的默認值，或者留空
-    "API_BASE_URL": "",
-    "PORTFOLIO_ID": ""
-  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS"
