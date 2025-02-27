@@ -55,8 +55,8 @@ jobs:
       - name: Deploy to Cloudflare Workers
         run: |
           echo "Setting secrets..."
-          wrangler secret put API_BASE_URL --value "${{ secrets.API_BASE_URL }}"
-          wrangler secret put PORTFOLIO_ID --value "${{ secrets.PORTFOLIO_ID }}"
+          echo "${{ secrets.API_BASE_URL }}" | wrangler secret put API_BASE_URL
+          echo "${{ secrets.PORTFOLIO_ID }}" | wrangler secret put PORTFOLIO_ID
           echo "Deploying worker..."
           wrangler deploy
         env:
