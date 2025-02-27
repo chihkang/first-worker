@@ -378,17 +378,49 @@ function addChartStyles() {
 }
 function setupResizeHandler() {
   let resizeTimeout = null;
+  let lastWidth = window.innerWidth;
+  let lastHeight = window.innerHeight;
+  let isScrolling = false;
+  document.addEventListener("scroll", function() {
+    isScrolling = true;
+    clearTimeout(window.scrollTimeout);
+    window.scrollTimeout = setTimeout(function() {
+      isScrolling = false;
+    }, 200);
+  }, { passive: true });
   function resizeChart() {
-    if (window.chartData) {
-      createChart(window.chartData);
+    const currentWidth = window.innerWidth;
+    const currentHeight = window.innerHeight;
+    const widthChanged = Math.abs(currentWidth - lastWidth) > 5;
+    const heightChanged = Math.abs(currentHeight - lastHeight) > 5;
+    if ((widthChanged || heightChanged) && !isScrolling) {
+      console.log("Significant size change detected, redrawing chart");
+      console.log(`Width: ${lastWidth} -> ${currentWidth}, Height: ${lastHeight} -> ${currentHeight}`);
+      lastWidth = currentWidth;
+      lastHeight = currentHeight;
+      if (window.chartData) {
+        createChart(window.chartData);
+      }
+    } else {
+      console.log("Ignoring resize event during scroll or minor size change");
     }
   }
   window.addEventListener("resize", function() {
     if (resizeTimeout) {
       clearTimeout(resizeTimeout);
     }
-    resizeTimeout = window.setTimeout(resizeChart, 250);
-  });
+    resizeTimeout = window.setTimeout(resizeChart, 500);
+  }, { passive: true });
+  window.addEventListener("orientationchange", function() {
+    console.log("Orientation changed, will redraw chart");
+    setTimeout(function() {
+      if (window.chartData) {
+        lastWidth = window.innerWidth;
+        lastHeight = window.innerHeight;
+        createChart(window.chartData);
+      }
+    }, 300);
+  }, { passive: true });
 }
 var chart_default = {
   createChart,

@@ -1,7 +1,12 @@
 // src/chart.ts
 declare const d3: any;
 declare const _: any;
-
+declare global {
+  interface Window {
+    chartData: any;
+    scrollTimeout: number;
+  }
+}
 // Define interfaces for the data structure
 interface DataPoint {
   date: Date;
@@ -733,13 +738,50 @@ export function addChartStyles(): void {
  */
 export function setupResizeHandler(): void {
   let resizeTimeout: number | null = null;
+  let lastWidth = window.innerWidth;
+  let lastHeight = window.innerHeight;
+  let isScrolling = false;
+
+  // 檢測滾動狀態
+  document.addEventListener('scroll', function () {
+    isScrolling = true;
+
+    // 清除之前的滾動超時
+    clearTimeout(window.scrollTimeout);
+
+    // 設置新的超時，滾動停止後重置標誌
+    window.scrollTimeout = setTimeout(function () {
+      isScrolling = false;
+    }, 200) as unknown as number;
+  }, { passive: true });
 
   function resizeChart() {
-    if ((window as any).chartData) {
-      createChart((window as any).chartData);
+    // 獲取當前尺寸
+    const currentWidth = window.innerWidth;
+    const currentHeight = window.innerHeight;
+
+    // 只有當寬度或高度變化超過閾值，且不是在滾動中時才重繪
+    const widthChanged = Math.abs(currentWidth - lastWidth) > 5;
+    const heightChanged = Math.abs(currentHeight - lastHeight) > 5;
+
+    if ((widthChanged || heightChanged) && !isScrolling) {
+      console.log('Significant size change detected, redrawing chart');
+      console.log(`Width: ${lastWidth} -> ${currentWidth}, Height: ${lastHeight} -> ${currentHeight}`);
+
+      // 更新上次尺寸
+      lastWidth = currentWidth;
+      lastHeight = currentHeight;
+
+      // 重繪圖表
+      if ((window as any).chartData) {
+        createChart((window as any).chartData);
+      }
+    } else {
+      console.log('Ignoring resize event during scroll or minor size change');
     }
   }
 
+  // 使用更長的 debounce 時間
   window.addEventListener('resize', function () {
     // 清除之前的 timeout
     if (resizeTimeout) {
@@ -747,9 +789,26 @@ export function setupResizeHandler(): void {
     }
 
     // 設置新的 timeout，避免頻繁重繪
-    resizeTimeout = window.setTimeout(resizeChart, 250) as unknown as number;
-  });
+    resizeTimeout = window.setTimeout(resizeChart, 500) as unknown as number;
+  }, { passive: true });
+
+  // 添加方向變化事件監聽器
+  window.addEventListener('orientationchange', function () {
+    console.log('Orientation changed, will redraw chart');
+
+    // 方向變化後稍等一下再重繪，讓瀏覽器有時間調整佈局
+    setTimeout(function () {
+      if ((window as any).chartData) {
+        // 更新尺寸記錄
+        lastWidth = window.innerWidth;
+        lastHeight = window.innerHeight;
+
+        createChart((window as any).chartData);
+      }
+    }, 300);
+  }, { passive: true });
 }
+
 
 // Export all functions
 export {
