@@ -56,5 +56,5 @@ jobs:
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           command: deploy
           secrets: |
-            API_BASE_URL=${{ secrets.API_BASE_URL }}
-            PORTFOLIO_ID=${{ secrets.PORTFOLIO_ID }}
+            API_BASE_URL="${{ secrets.API_BASE_URL }}"
+            PORTFOLIO_ID="${{ secrets.PORTFOLIO_ID }}"
