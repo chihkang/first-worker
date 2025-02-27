@@ -50,12 +50,15 @@ jobs:
         run: npm run build:client
           
       - name: Install Wrangler
-        run: npm install -g wrangler
+        run: npm install -g wrangler        
         
       - name: Deploy to Cloudflare Workers
         run: |
-          echo "Deploying worker with vars..."
-          wrangler deploy --var API_BASE_URL="${{ secrets.API_BASE_URL }}" --var PORTFOLIO_ID="${{ secrets.PORTFOLIO_ID }}"
+          echo "Deploying worker..."
+          wrangler deploy
+          echo "Setting variables..."
+          wrangler var put API_BASE_URL --value "${{ secrets.API_BASE_URL }}"
+          wrangler var put PORTFOLIO_ID --value "${{ secrets.PORTFOLIO_ID }}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
