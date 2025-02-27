@@ -2,7 +2,7 @@
 
 這是一個使用 Cloudflare Workers 構建的投資組合追蹤應用程式，可以視覺化顯示投資組合的歷史表現。該應用程式使用 TypeScript 開發，並利用 D3.js 創建互動式圖表。
 
-![portfolio](/Users/chihkanglin/PlayGround/cloudflare/first-worker/first-worker/portfolio.jpeg)
+![portfolio](./portfolio.jpeg)
 
 ## 功能特點
 

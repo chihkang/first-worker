@@ -23,6 +23,9 @@ jobs:
         
       - name: Run tests
         run: npm test
+        env:
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+          PORTFOLIO_ID: ${{ secrets.PORTFOLIO_ID }}
         
       - name: Lint code
         run: npm run lint
