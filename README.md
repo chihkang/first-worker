@@ -57,7 +57,7 @@
 ├── tsconfig.json              # TypeScript 配置
 ├── vitest.config.mts          # Vitest 配置
 ├── worker-configuration.d.ts  # Worker 類型定義
-└── wrangler.jsonc             # Wrangler 配置
+└── wrangler.toml             # Wrangler 配置
 ```
 
 ## 安裝與設置
@@ -194,7 +194,7 @@ GET /api/portfolio?range=6
 應用程式從以下 API 獲取投資組合數據:
 
 ```text
-https://portfoliomanager-production.up.railway.app/api/PortfolioDailyValue/67283d5d447a55a757f87db7/history
+${env.API_BASE_URL}/api/PortfolioDailyValue/${env.PORTFOLIO_ID}/history?range=${range}
 ```
 
 ## **主要組件**
