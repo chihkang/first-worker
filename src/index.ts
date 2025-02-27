@@ -4,6 +4,8 @@ import { processData } from './utils/dataProcessor';
 interface Env {
   ASSETS: Fetcher;
   PORTFOLIO_CACHE: KVNamespace;
+  API_BASE_URL: string;
+  PORTFOLIO_ID: string;
 }
 
 // 幫助函數添加 CORS 頭
@@ -58,7 +60,7 @@ export default {
             }
           }
           // 從外部 API 獲取數據
-          const apiUrl = `https://portfoliomanager-production.up.railway.app/api/PortfolioDailyValue/67283d5d447a55a757f87db7/history?range=${range}`;
+          const apiUrl = `${env.API_BASE_URL}/api/PortfolioDailyValue/${env.PORTFOLIO_ID}/history?range=${range}`;
           console.log('Fetching from API:', apiUrl);
           
           const apiResponse = await fetch(
