@@ -1,3 +1,4 @@
+[![CI/CD Pipeline](https://github.com/chihkang/first-worker/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/chihkang/first-worker/actions/workflows/ci-cd.yml)
 # Portfolio Tracker - Cloudflare Workers 專案
 
 這是一個使用 Cloudflare Workers 構建的投資組合追蹤應用程式，可以視覺化顯示投資組合的歷史表現。該應用程式使用 TypeScript 開發，並利用 D3.js 創建互動式圖表。
