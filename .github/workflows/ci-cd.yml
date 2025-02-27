@@ -50,13 +50,16 @@ jobs:
         run: npm run build:client
           
       - name: Install Wrangler
-        run: npm install -g wrangler        
+        run: npm install -g wrangler
         
       - name: Deploy to Cloudflare Workers
         run: |
-          echo "Deploying worker with bindings..."
-          wrangler deploy --binding API_BASE_URL="${{ secrets.API_BASE_URL }}" --binding PORTFOLIO_ID="${{ secrets.PORTFOLIO_ID }}"
+          echo "Deploying worker..."
+          wrangler deploy
+          
+          echo "Setting secrets..."
+          echo "${{ secrets.API_BASE_URL }}" | wrangler secret put API_BASE_URL
+          echo "${{ secrets.PORTFOLIO_ID }}" | wrangler secret put PORTFOLIO_ID
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
-      
