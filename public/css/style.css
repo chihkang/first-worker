@@ -160,3 +160,84 @@ h1 {
     max-width: 200px;
     min-width: 150px;
 }
+/* 響應式樣式 */
+@media (max-width: 768px) {
+    body {
+      padding: 10px;
+    }
+    
+    .container {
+      padding: 15px;
+    }
+    
+    h1 {
+      font-size: 20px;
+      margin-bottom: 20px;
+    }
+    
+    .range-selector {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      margin: 10px 0;
+    }
+    
+    .range-btn {
+      margin: 0;
+      padding: 6px 10px;
+      font-size: 12px;
+      flex-grow: 1;
+      max-width: calc(25% - 5px);
+    }
+    
+    .chart-container {
+      padding: 10px;
+      margin-top: 10px;
+    }
+    
+    .summary-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    
+    .summary-item {
+      padding: 10px;
+    }
+    
+    .summary-item h3 {
+      font-size: 12px;
+    }
+    
+    .summary-item p {
+      font-size: 14px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .container {
+      padding: 10px;
+    }
+    
+    .range-selector span {
+      display: block;
+      width: 100%;
+      margin-bottom: 5px;
+      text-align: center;
+    }
+    
+    .range-btn {
+      font-size: 11px;
+      padding: 5px 8px;
+    }
+    
+    .axis text {
+      font-size: 9px;
+    }
+    
+    .axis-label {
+      font-size: 10px;
+    }
+  }
+  

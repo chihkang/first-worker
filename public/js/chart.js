@@ -30,10 +30,11 @@ function formatPercent(value) {
 function createChart(data) {
   console.log("Creating chart with data:", data);
   console.log("Data points count:", data.values.length);
-  if (data.values.length > 0) {
-    const firstDate = new Date(data.values[0].date);
-    const lastDate = new Date(data.values[data.values.length - 1].date);
-    console.log("Date range:", firstDate.toISOString(), "to", lastDate.toISOString());
+  d3.select("#chart").selectAll("*").remove();
+  if (!data || !data.values || data.values.length === 0) {
+    console.error("Invalid data for chart");
+    document.getElementById("chart").innerHTML = '<div class="error">\u5716\u8868\u8CC7\u6599\u7121\u6548\uFF0C\u8ACB\u91CD\u65B0\u6574\u7406\u9801\u9762\u3002</div>';
+    return;
   }
   try {
     let makeXGrid2 = function() {
@@ -42,20 +43,26 @@ function createChart(data) {
       return d3.axisLeft(y).ticks(10).tickSize(-width).tickFormat("");
     };
     var makeXGrid = makeXGrid2, makeYGrid = makeYGrid2;
+    if (data.values.length > 0) {
+      const firstDate = new Date(data.values[0].date);
+      const lastDate = new Date(data.values[data.values.length - 1].date);
+      console.log("Date range:", firstDate.toISOString(), "to", lastDate.toISOString());
+    }
     data.values.forEach((d) => {
       if (!(d.date instanceof Date)) {
         console.log("Converting date:", d.date);
         d.date = new Date(d.date);
       }
     });
-    d3.select("#chart").selectAll("*").remove();
     const minDate = d3.min(data.values, (d) => d.date);
     const maxDate = d3.max(data.values, (d) => d.date);
     console.log("X-axis date range:", minDate, "to", maxDate);
-    const margin = { top: 50, right: 120, bottom: 80, left: 100 };
-    const width = Math.max(800, window.innerWidth - margin.left - margin.right - 40);
-    const height = 500;
-    const svg = d3.select("#chart").append("svg").attr("width", width + margin.left + margin.right).attr("height", height + margin.top + margin.bottom).append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const margin = { top: 50, right: 50, bottom: 80, left: 60 };
+    const container = document.getElementById("chart");
+    const containerWidth = container.clientWidth;
+    const width = containerWidth - margin.left - margin.right;
+    const height = Math.min(500, Math.max(300, containerWidth * 0.5));
+    const svg = d3.select("#chart").append("svg").attr("width", "100%").attr("height", height + margin.top + margin.bottom).attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`).attr("preserveAspectRatio", "xMidYMid meet").append("g").attr("transform", `translate(${margin.left},${margin.top})`);
     const x = d3.scaleTime().domain([
       minDate || /* @__PURE__ */ new Date(),
       maxDate || /* @__PURE__ */ new Date()
@@ -111,32 +118,48 @@ function createChart(data) {
     }).curve(curveType);
     const segment = data.values;
     svg.append("path").datum(segment).attr("class", "area").attr("d", area).style("fill", "rgba(33, 150, 243, 0.1)");
-    svg.append("path").datum(segment).attr("class", "line").attr("d", line).style("stroke", "#2196F3").style("stroke-width", 2).style("fill", "none");
-    let tickInterval = d3.timeDay.every(2);
+    svg.append("path").datum(segment).attr("class", "line").attr("d", line).style("stroke", "#2196F3").style("stroke-width", width < 500 ? 1.5 : 2).style("fill", "none");
     const dataPointCount = data.values.length;
-    if (dataPointCount <= 30) {
-      tickInterval = d3.timeDay.every(1);
-    } else if (dataPointCount <= 60) {
-      tickInterval = d3.timeDay.every(2);
-    } else if (dataPointCount <= 90) {
-      tickInterval = d3.timeDay.every(3);
-    } else if (dataPointCount <= 180) {
-      tickInterval = d3.timeDay.every(7);
+    let tickInterval;
+    if (width < 500) {
+      if (dataPointCount <= 30) {
+        tickInterval = d3.timeDay.every(5);
+      } else if (dataPointCount <= 90) {
+        tickInterval = d3.timeDay.every(10);
+      } else {
+        tickInterval = d3.timeDay.every(20);
+      }
     } else {
-      tickInterval = d3.timeDay.every(14);
+      if (dataPointCount <= 30) {
+        tickInterval = d3.timeDay.every(1);
+      } else if (dataPointCount <= 60) {
+        tickInterval = d3.timeDay.every(2);
+      } else if (dataPointCount <= 90) {
+        tickInterval = d3.timeDay.every(3);
+      } else if (dataPointCount <= 180) {
+        tickInterval = d3.timeDay.every(7);
+      } else {
+        tickInterval = d3.timeDay.every(14);
+      }
     }
     console.log("Using tick interval based on", dataPointCount, "data points");
     const xAxis = d3.axisBottom(x).ticks(tickInterval).tickFormat(d3.timeFormat("%m/%d"));
-    svg.append("g").attr("class", "x axis").attr("transform", `translate(0,${height})`).call(xAxis).selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", "rotate(-45)");
-    const yAxis = d3.axisLeft(y).ticks(10).tickFormat((value) => (value / 1e6).toFixed(2) + "M");
-    svg.append("g").attr("class", "y axis").call(yAxis);
-    svg.append("text").attr("class", "axis-label").attr("x", width / 2).attr("y", height + margin.bottom - 10).style("text-anchor", "middle").text("\u65E5\u671F (2025\u5E74)");
-    svg.append("text").attr("class", "axis-label").attr("transform", "rotate(-90)").attr("y", -margin.left + 20).attr("x", -(height / 2)).style("text-anchor", "middle").text("\u7E3D\u8CC7\u7522\u50F9\u503C (TWD)");
-    const points = svg.selectAll(".data-point").data(segment).enter().append("circle").attr("class", "data-point").attr("cx", (d) => x(d.date)).attr("cy", (d) => y(d.totalValueTwd)).attr("r", 4).style("fill", "#2196F3").style("stroke", "white").style("stroke-width", 2);
+    svg.append("g").attr("class", "x axis").attr("transform", `translate(0,${height})`).call(xAxis).selectAll("text").style("text-anchor", "end").attr("dx", "-.8em").attr("dy", ".15em").attr("transform", function() {
+      return width < 500 ? "rotate(-90)" : "rotate(-45)";
+    }).style("font-size", width < 500 ? "9px" : "12px");
+    const yTickCount = Math.max(3, Math.floor(height / 50));
+    const yAxis = d3.axisLeft(y).ticks(yTickCount).tickFormat((value) => (value / 1e6).toFixed(1) + "M");
+    svg.append("g").attr("class", "y axis").call(yAxis).selectAll("text").style("font-size", width < 500 ? "9px" : "12px");
+    if (width >= 400) {
+      svg.append("text").attr("class", "axis-label").attr("x", width / 2).attr("y", height + margin.bottom - 10).style("text-anchor", "middle").style("font-size", width < 600 ? "10px" : "12px").text("\u65E5\u671F (2025\u5E74)");
+      svg.append("text").attr("class", "axis-label").attr("transform", "rotate(-90)").attr("y", -margin.left + 20).attr("x", -(height / 2)).style("text-anchor", "middle").style("font-size", width < 600 ? "10px" : "12px").text("\u7E3D\u8CC7\u7522\u50F9\u503C (TWD)");
+    }
+    const pointSize = width < 500 ? 3 : 4;
+    const points = svg.selectAll(".data-point").data(segment).enter().append("circle").attr("class", "data-point").attr("cx", (d) => x(d.date)).attr("cy", (d) => y(d.totalValueTwd)).attr("r", pointSize).style("fill", "#2196F3").style("stroke", "white").style("stroke-width", width < 500 ? 1 : 2);
     d3.selectAll(".chart-tooltip").remove();
-    const tooltip = d3.select("body").append("div").attr("class", "chart-tooltip tooltip").style("opacity", 0).style("position", "absolute").style("background-color", "rgba(0, 0, 0, 0.8)").style("color", "white").style("padding", "10px").style("border-radius", "5px").style("pointer-events", "none").style("font-size", "12px").style("z-index", "1000").style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)");
+    const tooltip = d3.select("body").append("div").attr("class", "chart-tooltip tooltip").style("opacity", 0).style("position", "absolute").style("background-color", "rgba(0, 0, 0, 0.8)").style("color", "white").style("padding", width < 500 ? "8px" : "10px").style("border-radius", "5px").style("pointer-events", "none").style("font-size", width < 500 ? "10px" : "12px").style("z-index", "1000").style("box-shadow", "0 2px 4px rgba(0,0,0,0.2)").style("max-width", width < 500 ? "150px" : "180px").style("min-width", width < 500 ? "120px" : "150px");
     points.on("mouseover", function(event, d) {
-      d3.select(this).attr("r", 8).style("fill", "#FF4081");
+      d3.select(this).attr("r", width < 500 ? 6 : 8).style("fill", "#FF4081");
       const formattedDate = d.date instanceof Date ? d.date.toLocaleDateString("zh-TW", { year: "numeric", month: "2-digit", day: "2-digit" }) : formatDate(d.date);
       const formattedValue = formatCurrency(d.totalValueTwd);
       const formattedChange = d.changePercent !== void 0 ? formatPercent(d.changePercent) : "N/A";
@@ -156,8 +179,8 @@ function createChart(data) {
           </span>
         </div>
       `);
-      const tooltipWidth = 180;
-      const tooltipHeight = 100;
+      const tooltipWidth = width < 500 ? 150 : 180;
+      const tooltipHeight = width < 500 ? 80 : 100;
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
       let tooltipX = event.pageX + 15;
@@ -170,29 +193,89 @@ function createChart(data) {
       }
       tooltip.style("left", tooltipX + "px").style("top", tooltipY + "px");
     }).on("mouseout", function() {
-      d3.select(this).attr("r", 4).style("fill", "#2196F3");
+      d3.select(this).attr("r", pointSize).style("fill", "#2196F3");
       tooltip.transition().duration(300).style("opacity", 0);
     });
+    console.log("Chart data summary:", data.summary);
+    console.log("Highest point date:", data.summary.highestValueDate);
+    console.log("Lowest point date:", data.summary.lowestValueDate);
+    console.log("X domain:", x.domain());
     const highestPoint = {
-      date: data.summary.highestValueDate,
+      date: new Date(data.summary.highestValueDate),
       totalValueTwd: data.summary.highestValue
     };
     const lowestPoint = {
-      date: data.summary.lowestValueDate,
+      date: new Date(data.summary.lowestValueDate),
       totalValueTwd: data.summary.lowestValue
     };
-    svg.append("circle").attr("class", "highlight-point").attr("cx", x(highestPoint.date)).attr("cy", y(highestPoint.totalValueTwd)).attr("r", 6).style("fill", "#4CAF50").style("stroke", "white").style("stroke-width", 2);
-    svg.append("text").attr("class", "point-label").attr("x", x(highestPoint.date)).attr("y", y(highestPoint.totalValueTwd) - 15).attr("text-anchor", "middle").style("fill", "#4CAF50").text(formatMillions(highestPoint.totalValueTwd));
-    svg.append("circle").attr("class", "highlight-point").attr("cx", x(lowestPoint.date)).attr("cy", y(lowestPoint.totalValueTwd)).attr("r", 6).style("fill", "#F44336").style("stroke", "white").style("stroke-width", 2);
-    svg.append("text").attr("class", "point-label").attr("x", x(lowestPoint.date)).attr("y", y(lowestPoint.totalValueTwd) + 25).attr("text-anchor", "middle").style("fill", "#F44336").text(formatMillions(lowestPoint.totalValueTwd));
-    const legend = svg.append("g").attr("class", "legend").attr("transform", `translate(${width - 100}, 0)`);
-    legend.append("circle").attr("r", 6).attr("cx", 0).attr("cy", 0).style("fill", "#4CAF50");
-    legend.append("text").attr("x", 10).attr("y", 4).text("\u6700\u9AD8\u9EDE");
-    legend.append("circle").attr("r", 6).attr("cx", 0).attr("cy", 20).style("fill", "#F44336");
-    legend.append("text").attr("x", 10).attr("y", 24).text("\u6700\u4F4E\u9EDE");
+    console.log("Highest point for drawing:", highestPoint);
+    console.log("Lowest point for drawing:", lowestPoint);
+    console.log("X position for highest point:", x(highestPoint.date));
+    console.log("X position for lowest point:", x(lowestPoint.date));
+    console.log("Y position for highest point:", y(highestPoint.totalValueTwd));
+    console.log("Y position for lowest point:", y(lowestPoint.totalValueTwd));
+    if (isNaN(x(highestPoint.date)) || isNaN(y(highestPoint.totalValueTwd))) {
+      console.error("Invalid position for highest point");
+      let maxValue = -Infinity;
+      let maxValuePoint = null;
+      for (const point of data.values) {
+        if (point.totalValueTwd > maxValue) {
+          maxValue = point.totalValueTwd;
+          maxValuePoint = point;
+        }
+      }
+      if (maxValuePoint) {
+        console.log("Using calculated highest point from data:", maxValuePoint);
+        highestPoint.date = maxValuePoint.date;
+        highestPoint.totalValueTwd = maxValuePoint.totalValueTwd;
+      }
+    }
+    if (isNaN(x(lowestPoint.date)) || isNaN(y(lowestPoint.totalValueTwd))) {
+      console.error("Invalid position for lowest point");
+      let minValue = Infinity;
+      let minValuePoint = null;
+      for (const point of data.values) {
+        if (point.totalValueTwd < minValue) {
+          minValue = point.totalValueTwd;
+          minValuePoint = point;
+        }
+      }
+      if (minValuePoint) {
+        console.log("Using calculated lowest point from data:", minValuePoint);
+        lowestPoint.date = minValuePoint.date;
+        lowestPoint.totalValueTwd = minValuePoint.totalValueTwd;
+      }
+    }
+    console.log("Final X position for highest point:", x(highestPoint.date));
+    console.log("Final X position for lowest point:", x(lowestPoint.date));
+    if (!isNaN(x(highestPoint.date)) && !isNaN(y(highestPoint.totalValueTwd))) {
+      svg.append("circle").attr("class", "highlight-point").attr("cx", x(highestPoint.date)).attr("cy", y(highestPoint.totalValueTwd)).attr("r", width < 500 ? 5 : 6).style("fill", "#4CAF50").style("stroke", "white").style("stroke-width", width < 500 ? 1 : 2);
+      if (width >= 500) {
+        svg.append("text").attr("class", "point-label").attr("x", x(highestPoint.date)).attr("y", y(highestPoint.totalValueTwd) - 15).attr("text-anchor", "middle").style("fill", "#4CAF50").style("font-size", width < 600 ? "10px" : "12px").text(formatMillions(highestPoint.totalValueTwd));
+      }
+    }
+    if (!isNaN(x(lowestPoint.date)) && !isNaN(y(lowestPoint.totalValueTwd))) {
+      svg.append("circle").attr("class", "highlight-point").attr("cx", x(lowestPoint.date)).attr("cy", y(lowestPoint.totalValueTwd)).attr("r", width < 500 ? 5 : 6).style("fill", "#F44336").style("stroke", "white").style("stroke-width", width < 500 ? 1 : 2);
+      if (width >= 500) {
+        svg.append("text").attr("class", "point-label").attr("x", x(lowestPoint.date)).attr("y", y(lowestPoint.totalValueTwd) + 25).attr("text-anchor", "middle").style("fill", "#F44336").style("font-size", width < 600 ? "10px" : "12px").text(formatMillions(lowestPoint.totalValueTwd));
+      }
+    }
+    const legendX = width < 500 ? width - 70 : width - 100;
+    const legendFontSize = width < 500 ? "10px" : "12px";
+    const legend = svg.append("g").attr("class", "legend").attr("transform", `translate(${legendX}, 0)`);
+    legend.append("circle").attr("r", width < 500 ? 5 : 6).attr("cx", 0).attr("cy", 0).style("fill", "#4CAF50");
+    legend.append("text").attr("x", 10).attr("y", 4).style("font-size", legendFontSize).text("\u6700\u9AD8\u9EDE");
+    legend.append("circle").attr("r", width < 500 ? 5 : 6).attr("cx", 0).attr("cy", 20).style("fill", "#F44336");
+    legend.append("text").attr("x", 10).attr("y", 24).style("font-size", legendFontSize).text("\u6700\u4F4E\u9EDE");
   } catch (error) {
     console.error("Error in createChart:", error);
-    throw error;
+    document.getElementById("chart").innerHTML = '<div class="error">\u5716\u8868\u8F09\u5165\u5931\u6557\uFF0C\u8ACB\u91CD\u65B0\u6574\u7406\u9801\u9762\u3002</div>';
+    setTimeout(() => {
+      if (window.chartData) {
+        console.log("Retrying chart creation...");
+        createChart(window.chartData);
+      }
+    }, 1e3);
   }
 }
 function addChartStyles() {
@@ -236,18 +319,76 @@ function addChartStyles() {
     .highlight-point {
       transition: r 0.2s ease, fill 0.2s ease;
     }
+    
+    /* \u97FF\u61C9\u5F0F\u6A23\u5F0F */
+    @media (max-width: 768px) {
+      .line {
+        stroke-width: 1.5;
+      }
+      
+      .axis-label {
+        font-size: 10px;
+      }
+      
+      .point-label {
+        font-size: 10px;
+      }
+      
+      .tooltip {
+        padding: 8px;
+        font-size: 10px;
+        max-width: 150px;
+        min-width: 120px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .line {
+        stroke-width: 1.5;
+      }
+      
+      .axis text {
+        font-size: 9px;
+      }
+      
+      .axis-label {
+        font-size: 9px;
+      }
+      
+      .point-label {
+        font-size: 9px;
+      }
+      
+      .data-point, .highlight-point {
+        transition: none; /* \u5728\u5C0F\u87A2\u5E55\u4E0A\u7981\u7528\u904E\u6E21\u6548\u679C\u4EE5\u63D0\u9AD8\u6027\u80FD */
+      }
+    }
+    
+    .error {
+      color: #F44336;
+      padding: 20px;
+      text-align: center;
+      font-size: 16px;
+      background-color: #FFEBEE;
+      border-radius: 4px;
+      margin: 20px 0;
+    }
   `;
   document.head.appendChild(style);
 }
 function setupResizeHandler() {
+  let resizeTimeout = null;
   function resizeChart() {
-    const margin = { top: 50, right: 120, bottom: 80, left: 100 };
-    const newWidth = Math.max(800, window.innerWidth - margin.left - margin.right - 40);
     if (window.chartData) {
       createChart(window.chartData);
     }
   }
-  window.addEventListener("resize", _.debounce(resizeChart, 250));
+  window.addEventListener("resize", function() {
+    if (resizeTimeout) {
+      clearTimeout(resizeTimeout);
+    }
+    resizeTimeout = window.setTimeout(resizeChart, 250);
+  });
 }
 var chart_default = {
   createChart,

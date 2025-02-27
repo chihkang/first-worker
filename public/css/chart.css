@@ -102,3 +102,30 @@
     font-size: 12px;
     font-weight: bold;
 }
+/* 在 chart.css 中添加 */
+@media (max-width: 768px) {
+    .line {
+      stroke-width: 1.5;
+    }
+    
+    .axis-label {
+      font-size: 10px;
+    }
+    
+    .point-label {
+      font-size: 10px;
+    }
+    
+    .tooltip {
+      padding: 8px;
+      font-size: 10px;
+      max-width: 150px;
+      min-width: 120px;
+    }
+    
+    .data-point, .highlight-point {
+      transition: none; /* 在小螢幕上禁用過渡效果以提高性能 */
+    }
+  }
+  
+  
