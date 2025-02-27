@@ -77,8 +77,8 @@ function createChart(data) {
     const height = Math.min(500, Math.max(300, containerWidth * 0.5));
     const svg = d3.select("#chart").append("svg").attr("width", "100%").attr("height", height + margin.top + margin.bottom).attr("viewBox", `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`).attr("preserveAspectRatio", "xMidYMid meet").append("g").attr("transform", `translate(${margin.left},${margin.top})`);
     const x = d3.scaleTime().domain([
-      minDate || /* @__PURE__ */ new Date(),
-      maxDate || /* @__PURE__ */ new Date()
+      d3.min(data.values, (d) => d.date) || /* @__PURE__ */ new Date(),
+      d3.max(data.values, (d) => d.date) || /* @__PURE__ */ new Date()
     ]).range([0, width]);
     console.log("X scale domain:", x.domain());
     const yMin = d3.min(data.values, (d) => d.totalValueTwd) || 0;

@@ -149,8 +149,8 @@ export function createChart(data: ChartData): void {
     // 建立比例尺 - 確保正確設置日期範圍
     const x = d3.scaleTime()
       .domain([
-        minDate || new Date(),
-        maxDate || new Date()
+        d3.min(data.values, d => d.date) || new Date(),
+        d3.max(data.values, d => d.date) || new Date()
       ])
       .range([0, width]);
 
